@@ -30,6 +30,9 @@ column_guide=0
 column_tiny=0
 
 # Shell path for terminal
+# This determines which shell is launched when you open a terminal
+# Common values: /bin/bash, /bin/zsh, /usr/bin/fish, /bin/sh
+# You can also change this in the configuration editor (Ctrl+E)
 shell_path=/usr/bin/sh
 
 # Syntax colors (hex-encoded for ANSI escape sequences)
