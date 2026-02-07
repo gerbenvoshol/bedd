@@ -95,7 +95,7 @@ int io_fvalid(io_file_t file) {
 }
 
 void io_fclose(io_file_t file) {
-  if (file.type == io_file_clipboard) {
+  if ((file.type & 0xFF) == io_file_clipboard) {
     io_cclose(file);
   } else {
     fclose(file.data);
@@ -176,24 +176,101 @@ void io_drewind(io_file_t file) {
   rewinddir(file.data);
 }
 
+// Clipboard type tracking - stored in unused bits of the type field
+#define IO_CLIPBOARD_PIPE  0x1000  // Using popen/pclose
+#define IO_CLIPBOARD_FILE  0x2000  // Using fopen/fclose
+
 io_file_t io_copen(int write_mode) {
+  // Try different clipboard mechanisms in order of preference
+  
+  // Method 1: Try xclip if available (X11 clipboard)
+  FILE *test_xclip = popen("command -v xclip >/dev/null 2>&1", "r");
+  if (test_xclip) {
+    int xclip_available = (pclose(test_xclip) == 0);
+    
+    if (xclip_available) {
+      if (write_mode) {
+        FILE *pipe = popen("xclip -selection clipboard -i", "w");
+        if (pipe) {
+          return (io_file_t) {
+            .type = io_file_clipboard | IO_CLIPBOARD_PIPE,
+            .read_only = 0,
+            .data = pipe,
+          };
+        }
+      } else {
+        FILE *pipe = popen("xclip -selection clipboard -o", "r");
+        if (pipe) {
+          return (io_file_t) {
+            .type = io_file_clipboard | IO_CLIPBOARD_PIPE,
+            .read_only = 1,
+            .data = pipe,
+          };
+        }
+      }
+    }
+  }
+  
+  // Method 2: Try wl-clipboard (Wayland clipboard)
+  FILE *test_wlclip = popen("command -v wl-copy >/dev/null 2>&1", "r");
+  if (test_wlclip) {
+    int wlclip_available = (pclose(test_wlclip) == 0);
+    
+    if (wlclip_available) {
+      if (write_mode) {
+        FILE *pipe = popen("wl-copy", "w");
+        if (pipe) {
+          return (io_file_t) {
+            .type = io_file_clipboard | IO_CLIPBOARD_PIPE,
+            .read_only = 0,
+            .data = pipe,
+          };
+        }
+      } else {
+        FILE *pipe = popen("wl-paste", "r");
+        if (pipe) {
+          return (io_file_t) {
+            .type = io_file_clipboard | IO_CLIPBOARD_PIPE,
+            .read_only = 1,
+            .data = pipe,
+          };
+        }
+      }
+    }
+  }
+  
+  // Method 3: Fall back to file-based clipboard (always works)
+  const char *home = getenv("HOME");
+  char clipboard_file[1024];
+  snprintf(clipboard_file, sizeof(clipboard_file), "%s/.bedd_clipboard", home ? home : "/tmp");
+  
   if (write_mode) {
+    FILE *file = fopen(clipboard_file, "w");
     return (io_file_t) {
-      .type = io_file_clipboard,
+      .type = io_file_clipboard | IO_CLIPBOARD_FILE,
       .read_only = 0,
-      .data = popen("xclip -selection clipboard -i", "w"),
+      .data = file,
     };
   } else {
+    FILE *file = fopen(clipboard_file, "r");
     return (io_file_t) {
-      .type = io_file_clipboard,
+      .type = io_file_clipboard | IO_CLIPBOARD_FILE,
       .read_only = 1,
-      .data = popen("xclip -selection clipboard -o", "r"),
+      .data = file,
     };
   }
 }
 
 void io_cclose(io_file_t file) {
-  pclose(file.data);
+  if (!file.data) {
+    return;
+  }
+  
+  if (file.type & IO_CLIPBOARD_PIPE) {
+    pclose(file.data);
+  } else if (file.type & IO_CLIPBOARD_FILE) {
+    fclose(file.data);
+  }
 }
 
 io_file_t io_topen(const char *path) {
