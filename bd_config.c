@@ -157,35 +157,45 @@ int bd_config_save(const char *path) {
   
   char buffer[8192];
   int len = 0;
+  int remaining = sizeof(buffer) - 1;
   
-  len += sprintf(buffer + len, "# bedd configuration file\n");
-  len += sprintf(buffer + len, "# This file is in text format for easy editing\n\n");
+  #define SAFE_APPEND(...) do { \
+    int written = snprintf(buffer + len, remaining, __VA_ARGS__); \
+    if (written < 0 || written >= remaining) return 0; \
+    len += written; \
+    remaining -= written; \
+  } while(0)
   
-  len += sprintf(buffer + len, "indent_width=%d\n", bd_config.indent_width);
-  len += sprintf(buffer + len, "indent_spaces=%d\n", bd_config.indent_spaces);
-  len += sprintf(buffer + len, "indent_guides=%d\n", bd_config.indent_guides);
-  len += sprintf(buffer + len, "scroll_step=%d\n", bd_config.scroll_step);
-  len += sprintf(buffer + len, "scroll_image_step=%d\n", bd_config.scroll_image_step);
-  len += sprintf(buffer + len, "scroll_width_margin=%d\n", bd_config.scroll_width_margin);
-  len += sprintf(buffer + len, "undo_edit_count=%d\n", bd_config.undo_edit_count);
-  len += sprintf(buffer + len, "undo_depth=%d\n", bd_config.undo_depth);
-  len += sprintf(buffer + len, "theme=%d\n", bd_config.theme);
-  len += sprintf(buffer + len, "xterm_colors=%d\n", bd_config.xterm_colors);
-  len += sprintf(buffer + len, "terminal_count=%d\n", bd_config.terminal_count);
-  len += sprintf(buffer + len, "column_guide=%d\n", bd_config.column_guide);
-  len += sprintf(buffer + len, "column_tiny=%d\n", bd_config.column_tiny);
+  SAFE_APPEND("# bedd configuration file\n");
+  SAFE_APPEND("# This file is in text format for easy editing\n\n");
   
-  len += sprintf(buffer + len, "\nshell_path=%s\n", bd_config.shell_path);
+  SAFE_APPEND("indent_width=%d\n", bd_config.indent_width);
+  SAFE_APPEND("indent_spaces=%d\n", bd_config.indent_spaces);
+  SAFE_APPEND("indent_guides=%d\n", bd_config.indent_guides);
+  SAFE_APPEND("scroll_step=%d\n", bd_config.scroll_step);
+  SAFE_APPEND("scroll_image_step=%d\n", bd_config.scroll_image_step);
+  SAFE_APPEND("scroll_width_margin=%d\n", bd_config.scroll_width_margin);
+  SAFE_APPEND("undo_edit_count=%d\n", bd_config.undo_edit_count);
+  SAFE_APPEND("undo_depth=%d\n", bd_config.undo_depth);
+  SAFE_APPEND("theme=%d\n", bd_config.theme);
+  SAFE_APPEND("xterm_colors=%d\n", bd_config.xterm_colors);
+  SAFE_APPEND("terminal_count=%d\n", bd_config.terminal_count);
+  SAFE_APPEND("column_guide=%d\n", bd_config.column_guide);
+  SAFE_APPEND("column_tiny=%d\n", bd_config.column_tiny);
   
-  len += sprintf(buffer + len, "\n# Syntax colors (hex-encoded for ANSI escape sequences)\n");
+  SAFE_APPEND("\nshell_path=%s\n", bd_config.shell_path);
+  
+  SAFE_APPEND("\n# Syntax colors (hex-encoded for ANSI escape sequences)\n");
   for (int i = 0; i < st_color_count; i++) {
-    len += sprintf(buffer + len, "syntax_color_%d=", i);
+    SAFE_APPEND("syntax_color_%d=", i);
     // Encode as hex
     for (int j = 0; j < 64 && bd_config.syntax_colors[i][j] != '\0'; j++) {
-      len += sprintf(buffer + len, "%02x", (unsigned char)bd_config.syntax_colors[i][j]);
+      SAFE_APPEND("%02x", (unsigned char)bd_config.syntax_colors[i][j]);
     }
-    len += sprintf(buffer + len, "\n");
+    SAFE_APPEND("\n");
   }
+  
+  #undef SAFE_APPEND
   
   io_fwrite(file, buffer, len);
   io_fclose(file);

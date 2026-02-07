@@ -34,7 +34,13 @@ shell_path=/usr/bin/sh
 
 # Syntax colors (hex-encoded for ANSI escape sequences)
 # These use hex encoding to preserve ANSI color codes
-# Leave empty or use hex values like: 1b5b316d (ESC[1m)
+# Format: Each pair of hex digits represents one byte
+# Example: 1b5b316d decodes to ESC[1m (bold text)
+#   1b = ESC character (0x1B)
+#   5b = '[' character
+#   31 = '1' character
+#   6d = 'm' character
+# To create custom colors, encode the ANSI sequence as hex
 syntax_color_0=
 syntax_color_1=1b5b32326d11
 syntax_color_2=1b5b316d17
