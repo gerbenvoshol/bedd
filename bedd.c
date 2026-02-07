@@ -52,11 +52,18 @@ int bd_open(const char *path) {
 int main(int argc, const char **argv) {
   io_init();
   
-  io_file_t config = io_fopen(io_config, 0);
-  
-  if (io_fvalid(config)) {
-    io_fread(config, (void *)(&bd_config), sizeof(bd_config_t));
-    io_fclose(config);
+  // Try to load text-based config first
+  if (!bd_config_load(io_config)) {
+    // If text-based config doesn't exist, try to load old binary format
+    io_file_t config = io_fopen(io_config, 0);
+    
+    if (io_fvalid(config)) {
+      io_fread(config, (void *)(&bd_config), sizeof(bd_config_t));
+      io_fclose(config);
+      
+      // Migrate to text-based format
+      bd_config_save(io_config);
+    }
   }
   
   for (int i = 1; i < argc; i++) {

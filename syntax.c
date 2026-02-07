@@ -29,6 +29,22 @@ int st_sh_color(int prev_state, int *state, const char *text, int length);
 
 int st_rs_color(int prev_state, int *state, const char *text, int length);
 
+// HTML
+
+int st_html_color(int prev_state, int *state, const char *text, int length);
+
+// CSS
+
+int st_css_color(int prev_state, int *state, const char *text, int length);
+
+// Python
+
+int st_py_color(int prev_state, int *state, const char *text, int length);
+
+// Assembly
+
+int st_asm_color(int prev_state, int *state, const char *text, int length);
+
 // Default
 
 static int st_depth(const char *line, int length);
@@ -104,6 +120,42 @@ syntax_t st_init(const char *filename) {
         .f_depth = st_depth,
         .f_pair = st_c_pair,
         .f_color = st_sh_color,
+      };
+    }
+    
+    if (!strcasecmp(filename, ".html") || !strcasecmp(filename, ".htm")) {
+      return (syntax_t) {
+        .lang = "HTML",
+        .f_depth = st_depth,
+        .f_pair = st_pair,
+        .f_color = st_html_color,
+      };
+    }
+    
+    if (!strcasecmp(filename, ".css")) {
+      return (syntax_t) {
+        .lang = "CSS",
+        .f_depth = st_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_css_color,
+      };
+    }
+    
+    if (!strcasecmp(filename, ".py")) {
+      return (syntax_t) {
+        .lang = "Python",
+        .f_depth = st_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_py_color,
+      };
+    }
+    
+    if (!strcasecmp(filename, ".asm") || !strcasecmp(filename, ".s")) {
+      return (syntax_t) {
+        .lang = "Assembly",
+        .f_depth = st_depth,
+        .f_pair = st_c_pair,
+        .f_color = st_asm_color,
       };
     }
   }

@@ -19,7 +19,8 @@ static const int __edit_limits[] = {
   0, 1,
 };
 
-static const int __edit_count = 13;
+static const int __edit_count = 14;
+static const int __shell_path_index = 13;  // Index for shell path option (string, not integer)
 
 void bd_edit_draw(bd_view_t *view) {
   io_cursor(0, 2);
@@ -71,6 +72,9 @@ void bd_edit_draw(bd_view_t *view) {
   io_cursor(2, 22);
   io_printf(IO_BOLD "%sEnable compact UI (for ~80-column terminals):" IO_NORMAL " %s", (index == 12 ? IO_INVERT : ""), bd_config.column_tiny ? "Yes" : "No");
   
+  io_cursor(2, 24);
+  io_printf(IO_BOLD "%sTerminal shell path (Enter to edit):" IO_NORMAL " %s", (index == __shell_path_index ? IO_INVERT : ""), bd_config.shell_path);
+  
   view->cursor = (bd_cursor_t) {
     -1, -1,
   };
@@ -84,33 +88,47 @@ int bd_edit_event(bd_view_t *view, io_event_t event) {
     } else if (event.key == IO_ARROW_DOWN) {
       view->data = (void *)(((int)(view->data) + 1) % __edit_count);
       return 1;
-    } else if (event.key == IO_ARROW_LEFT) {
+    } else if (event.key == IO_ARROW_LEFT || event.key == IO_ARROW_RIGHT) {
       int index = (int)(view->data);
       
+      // Shell path is a string, not an integer - handled by Enter key
+      if (index == __shell_path_index) {
+        return 0;
+      }
+      
+      // Adjust value for integer options
+      int direction = (event.key == IO_ARROW_RIGHT) ? 1 : -1;
+      
       bd_config.raw_data[index] -= __edit_limits[index * 2];
-      bd_config.raw_data[index] += __edit_limits[index * 2 + 1] - __edit_limits[index * 2];
+      bd_config.raw_data[index] += direction + __edit_limits[index * 2 + 1] - __edit_limits[index * 2];
       bd_config.raw_data[index] %= (__edit_limits[index * 2 + 1] - __edit_limits[index * 2]) + 1;
       bd_config.raw_data[index] += __edit_limits[index * 2];
       
       strcpy(view->title, "Edit configuration*");
       return 1;
-    } else if (event.key == IO_ARROW_RIGHT) {
+    } else if (event.key == IO_CTRL('M')) { // Enter key
       int index = (int)(view->data);
       
-      bd_config.raw_data[index] -= __edit_limits[index * 2];
-      bd_config.raw_data[index]++;
-      bd_config.raw_data[index] %= (__edit_limits[index * 2 + 1] - __edit_limits[index * 2]) + 1;
-      bd_config.raw_data[index] += __edit_limits[index * 2];
-      
-      strcpy(view->title, "Edit configuration*");
-      return 1;
-    } else if (event.key == IO_CTRL('S')) {
-      io_file_t config = io_fopen(io_config, 1);
-      
-      if (io_fvalid(config)) {
-        io_fwrite(config, (void *)(&bd_config), sizeof(bd_config_t));
-        io_fclose(config);
+      if (index == __shell_path_index) { // Shell path option
+        char buffer[256];
+        strncpy(buffer, bd_config.shell_path, sizeof(buffer) - 1);
+        buffer[sizeof(buffer) - 1] = '\0';
         
+        // -16 means width = bd_width - 16 (dialog width relative to screen width)
+        int result = bd_dialog("Edit terminal shell path (Ctrl+Q to cancel)", -16, "i[Shell path:]b[1;Save]", buffer);
+        
+        if (result) {
+          strncpy(bd_config.shell_path, buffer, sizeof(bd_config.shell_path) - 1);
+          bd_config.shell_path[sizeof(bd_config.shell_path) - 1] = '\0';
+          strcpy(view->title, "Edit configuration*");
+        }
+        
+        return 1;
+      }
+      
+      return 0;
+    } else if (event.key == IO_CTRL('S')) {
+      if (bd_config_save(io_config)) {
         strcpy(view->title, "Edit configuration");
       }
       

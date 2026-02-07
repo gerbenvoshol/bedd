@@ -35,6 +35,7 @@ void bd_welcome_draw(bd_view_t *view) {
   io_printf_wrap(2 + (bd_width / 3), bd_width * 100, y,
                  IO_UNDERLINE "Text tab:" IO_NORMAL "\n"
                  IO_BOLD " Ctrl+S " IO_NORMAL "Save file\n"
+                 IO_BOLD " Ctrl+U " IO_NORMAL "Reload file\n"
                  IO_BOLD " Ctrl+C " IO_NORMAL "Copy\n"
                  IO_BOLD " Ctrl+X " IO_NORMAL "Cut\n"
                  IO_BOLD " Ctrl+V " IO_NORMAL "Paste\n"
@@ -42,6 +43,8 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Ctrl+Z " IO_NORMAL "Undo\n"
                  IO_BOLD " Ctrl+Y " IO_NORMAL "Redo\n"
                  IO_BOLD " Ctrl+K " IO_NORMAL "(Un)Comment\n"
+                 IO_BOLD " Ctrl+] " IO_NORMAL "Indent\n"
+                 IO_BOLD " Ctrl+[ " IO_NORMAL "Dedent\n"
                  IO_BOLD " (Shift+)Tab " IO_NORMAL "(Un)Indent\n"
                  IO_BOLD " Shift+[\u2190\u2191\u2192\u2193] " IO_NORMAL "Select\n\n"
                  IO_UNDERLINE "Terminal tab:" IO_NORMAL "\n"
@@ -62,6 +65,9 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Ctrl+R " IO_NORMAL "Rename\n"
                  IO_BOLD " Ctrl+K " IO_NORMAL "New directory\n"
                  IO_BOLD " Ctrl+L " IO_NORMAL "New file\n\n"
+                 IO_UNDERLINE "Image tab:" IO_NORMAL "\n"
+                 IO_BOLD " Ctrl+U " IO_NORMAL "Reload image\n"
+                 IO_BOLD " +/- " IO_NORMAL "Zoom in/out\n\n"
                  IO_UNDERLINE "Dialog box:" IO_NORMAL "\n"
                  IO_BOLD " Enter " IO_NORMAL "Accept\n"
                 );

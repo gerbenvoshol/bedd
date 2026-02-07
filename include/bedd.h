@@ -64,6 +64,9 @@ struct bd_view_t {
 
 extern bd_config_t bd_config;
 
+int bd_config_load(const char *path);
+int bd_config_save(const char *path);
+
 extern bd_view_t *bd_views;
 extern int bd_view_count, bd_view;
 
