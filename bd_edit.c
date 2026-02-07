@@ -105,12 +105,7 @@ int bd_edit_event(bd_view_t *view, io_event_t event) {
       strcpy(view->title, "Edit configuration*");
       return 1;
     } else if (event.key == IO_CTRL('S')) {
-      io_file_t config = io_fopen(io_config, 1);
-      
-      if (io_fvalid(config)) {
-        io_fwrite(config, (void *)(&bd_config), sizeof(bd_config_t));
-        io_fclose(config);
-        
+      if (bd_config_save(io_config)) {
         strcpy(view->title, "Edit configuration");
       }
       
