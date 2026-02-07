@@ -18,6 +18,21 @@ $ sh build.sh # Building it
 $ ./bedd      # Running it afterwards
 ```
 
+## Key Features
+
+### Text Editing
+
+bedd provides a familiar text editing experience with standard keybindings:
+
+- **Indentation**: Use `Ctrl+]` to increase indentation or `Ctrl+[` to decrease indentation on the current line or selected lines. `Tab` and `Shift+Tab` also work for selected text.
+- **Selection**: Hold `Shift` while using arrow keys to select text
+- **Undo/Redo**: `Ctrl+Z` and `Ctrl+Y`
+- **Copy/Cut/Paste**: `Ctrl+C`, `Ctrl+X`, `Ctrl+V`
+- **Find/Replace**: `Ctrl+F`
+- **Save**: `Ctrl+S`
+
+Press `Ctrl+W` in bedd to see the welcome screen with all available shortcuts.
+
 ## Configuration
 
 bedd stores its configuration in `~/.beddcfg` using a human-readable text format. The configuration file uses simple key=value pairs:
