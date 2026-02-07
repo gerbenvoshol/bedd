@@ -57,14 +57,6 @@ int st_sh_color(int prev_state, int *state, const char *text, int length) {
     return st_color_string;
   }
   
-  if (prev_state == st_sh_line_comment) {
-    if (text[0] == '\n') {
-      *state = st_sh_default;
-    }
-    
-    return st_color_comment;
-  }
-  
   if (text[0] == '#') {
     *state = st_sh_line_comment;
     return st_color_comment;
@@ -88,11 +80,6 @@ int st_sh_color(int prev_state, int *state, const char *text, int length) {
   if (text[0] == '\'') {
     *state = st_sh_char;
     return st_color_string;
-  }
-  
-  if (text[0] == '#') {
-    *state = st_sh_ident;
-    return st_color_keyword;
   }
   
   if (prev_state == st_sh_default) {
@@ -120,23 +107,27 @@ int st_sh_color(int prev_state, int *state, const char *text, int length) {
         is_keyword = 1;
       }
       
-      if (ident_length == 3 && strstr("set,for", buffer)) {
+      if (ident_length == 3 && strstr("set,for,pwd", buffer)) {
         is_keyword = 1;
       }
       
-      if (ident_length == 4 && strstr("case,done,echo,esac,eval,exec,exit,read,trap,wait", buffer)) {
+      if (ident_length == 4 && strstr("case,done,echo,esac,eval,exec,exit,read,trap,wait,then,else,elif,test", buffer)) {
         is_keyword = 1;
       }
       
-      if (ident_length == 5 && strstr("break,shift,umask,unset,while", buffer)) {
+      if (ident_length == 5 && strstr("break,shift,umask,unset,while,until,local,alias", buffer)) {
         is_keyword = 1;
       }
       
-      if (ident_length == 6 && strstr("export,return,ulimit", buffer)) {
+      if (ident_length == 6 && strstr("export,return,ulimit,source,select,printf,enable", buffer)) {
         is_keyword = 1;
       }
       
-      if (ident_length == 8 && strstr("continue,readonly", buffer)) {
+      if (ident_length == 7 && strstr("command,builtin,declare", buffer)) {
+        is_keyword = 1;
+      }
+      
+      if (ident_length == 8 && strstr("continue,readonly,function", buffer)) {
         is_keyword = 1;
       }
       

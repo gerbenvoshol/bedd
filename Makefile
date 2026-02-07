@@ -52,6 +52,7 @@ SRCS := bd_config.c \
         st_css.c \
         st_html.c \
         st_js.c \
+        st_json.c \
         st_md.c \
         st_py.c \
         st_rs.c \

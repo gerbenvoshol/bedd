@@ -16,6 +16,7 @@ int st_c_color(int prev_state, int *state, const char *text, int length);
 // JavaScript/JSON
 
 int st_js_color(int prev_state, int *state, const char *text, int length);
+int st_json_color(int prev_state, int *state, const char *text, int length);
 
 // Markdown
 
@@ -92,7 +93,7 @@ syntax_t st_init(const char *filename) {
         .lang = "JSON",
         .f_depth = st_c_depth,
         .f_pair = st_c_pair,
-        .f_color = st_js_color,
+        .f_color = st_json_color,
       };
     }
     
