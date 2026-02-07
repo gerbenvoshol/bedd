@@ -1192,6 +1192,51 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
     } else if (event.key == IO_CTRL('Y')) {
       __bd_text_redo(text);
       return 1;
+    } else if (event.key == IO_CTRL('U')) {
+      // Reload file from disk
+      if (!text->path[0] || strstr(text->path, " (read only)")) {
+        // No file path or read-only file - can't reload
+        return 0;
+      }
+      
+      if (text->dirty) {
+        // File has unsaved changes - prompt user
+        int result = bd_dialog("Reload file (Ctrl+Q to cancel)", -16, "2[File has unsaved changes. Reload will discard them.]b[2;Reload;Cancel]");
+        
+        if (result != 1) {
+          return 1; // User cancelled
+        }
+      }
+      
+      // Save current cursor position and scroll
+      bd_cursor_t saved_cursor = text->cursor;
+      bd_cursor_t saved_scroll = text->scroll;
+      
+      // Get the original path (remove any suffix like " (read only)")
+      char original_path[256];
+      strcpy(original_path, text->path);
+      
+      // Free existing content
+      __bd_text_free(text, 0, 0);
+      
+      // Reload file
+      bd_text_load(view, original_path);
+      
+      // Restore cursor and scroll positions if still valid
+      bd_text_t *reloaded_text = view->data;
+      if (saved_cursor.y < reloaded_text->count) {
+        reloaded_text->cursor = saved_cursor;
+        reloaded_text->hold_cursor = saved_cursor;
+        if (reloaded_text->cursor.x > reloaded_text->lines[reloaded_text->cursor.y].length) {
+          reloaded_text->cursor.x = reloaded_text->lines[reloaded_text->cursor.y].length;
+          reloaded_text->hold_cursor.x = reloaded_text->cursor.x;
+        }
+      }
+      if (saved_scroll.y < reloaded_text->count) {
+        reloaded_text->scroll = saved_scroll;
+      }
+      
+      return 1;
     } else if (event.key == IO_ALT(IO_CTRL('M'))) {
       const unsigned char *line = text->lines[text->cursor.y].data;
       int start = __bd_text_utf_8_to_byte(text, text->cursor.x, text->cursor.y);

@@ -166,10 +166,31 @@ int bd_image_event(bd_view_t *view, io_event_t event) {
   
   if (event.type == IO_EVENT_KEY_PRESS) {
     if (event.key == IO_CTRL('U')) {
-      image->scroll_x = 0;
-      image->scroll_y = 0;
-      
-      image->scale = -1;
+      // Reload image from disk
+      if (image->path[0]) {
+        // Save current scroll and scale
+        int saved_scroll_x = image->scroll_x;
+        int saved_scroll_y = image->scroll_y;
+        int saved_scale = image->scale;
+        
+        // Free existing image data
+        if (image->data) {
+          stbi_image_free(image->data);
+        }
+        
+        // Reload the image
+        char path_copy[256];
+        strcpy(path_copy, image->path);
+        bd_image_load(view, path_copy);
+        
+        // Restore scroll and scale if image loaded successfully
+        bd_image_t *reloaded_image = (bd_image_t *)(view->data);
+        if (reloaded_image->data) {
+          reloaded_image->scroll_x = saved_scroll_x;
+          reloaded_image->scroll_y = saved_scroll_y;
+          reloaded_image->scale = saved_scale;
+        }
+      }
       return 1;
     } else if (event.key == '+') {
       __bd_image_zoom(image, 1);
