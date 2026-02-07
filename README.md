@@ -30,6 +30,7 @@ bedd provides a familiar text editing experience with standard keybindings:
 - **Copy/Cut/Paste**: `Ctrl+C`, `Ctrl+X`, `Ctrl+V`
 - **Find/Replace**: `Ctrl+F`
 - **Save**: `Ctrl+S`
+- **Reload**: `Ctrl+U` to reload the current file from disk (works for text files, images, and directory listings)
 
 Press `Ctrl+W` in bedd to see the welcome screen with all available shortcuts.
 
