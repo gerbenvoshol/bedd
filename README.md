@@ -68,6 +68,16 @@ The terminal shell can be customized by setting the `shell_path` option. In the 
 
 If you have an existing binary configuration file from an older version of bedd, it will be automatically converted to the text format on the first run.
 
+## Clipboard Support
+
+bedd automatically detects and uses the best available clipboard mechanism:
+
+1. **xclip** (X11) - If available, uses the X11 clipboard
+2. **wl-clipboard** (Wayland) - If available, uses the Wayland clipboard
+3. **File-based fallback** - Always available as `~/.bedd_clipboard`
+
+This means bedd's clipboard functionality works even without X11 or Wayland, making it suitable for use over SSH, in containers, or in minimal environments.
+
 ## Licensing
 
 This project is licensed with the MIT license, check LICENSE for further details.
