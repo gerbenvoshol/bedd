@@ -11,7 +11,41 @@ provides builtin help in the form of a welcome screen with all the shortcuts pre
 
 ## How to build
 
-Building bedd is as easy as running the provided script in the main source folder:
+bedd can be built using either the provided shell script or the Makefile.
+
+### Using Makefile (Recommended)
+
+```sh
+# Normal build (dynamically linked, ~174KB)
+make
+
+# Static build (statically linked, ~1.1MB, works on many systems)
+make STATIC=1
+
+# Debug build (with debug symbols and sanitizers)
+make DEBUG=1
+
+# Install to /usr/local/bin
+sudo make install
+
+# Clean build artifacts
+make clean
+```
+
+The Makefile supports the following targets:
+- `make` or `make all` - Build bedd (default)
+- `make clean` - Remove build artifacts
+- `make install` - Install bedd to /usr/local/bin
+- `make uninstall` - Remove bedd from /usr/local/bin
+- `make help` - Show help message with all options
+
+**Static Build Benefits:**
+- A static build creates a single binary with no external dependencies
+- Works on systems without the exact same glibc version
+- Can be copied to older or newer Linux systems and run immediately
+- Ideal for deployment, containers, or when you need maximum portability
+
+### Using build.sh
 
 ```sh
 $ sh build.sh # Building it
