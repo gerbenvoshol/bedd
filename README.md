@@ -32,6 +32,22 @@ shell_path=/usr/bin/sh
 
 See `example.beddcfg` for a complete configuration example with all available options.
 
+### Editing Configuration
+
+You can edit the configuration in two ways:
+
+1. **Configuration Editor (Recommended)**: Press `Ctrl+E` in bedd to open the interactive configuration editor. Use arrow keys to navigate, left/right arrows to change values, and `Ctrl+S` to save.
+
+2. **Text File**: Edit `~/.beddcfg` directly with any text editor.
+
+### Terminal Shell
+
+The terminal shell can be customized by setting the `shell_path` option. In the configuration editor:
+1. Navigate to "Terminal shell path" 
+2. Press `Enter` to open the edit dialog
+3. Enter your preferred shell (e.g., `/bin/bash`, `/bin/zsh`, `/usr/bin/fish`)
+4. Press `Enter` to confirm and `Ctrl+S` to save
+
 ### Migration from Binary Format
 
 If you have an existing binary configuration file from an older version of bedd, it will be automatically converted to the text format on the first run.
