@@ -111,7 +111,7 @@ int st_sh_color(int prev_state, int *state, const char *text, int length) {
         is_keyword = 1;
       }
       
-      if (ident_length == 4 && strstr("case,done,echo,esac,eval,exec,exit,read,trap,wait,then,else,test", buffer)) {
+      if (ident_length == 4 && strstr("case,done,echo,esac,eval,exec,exit,read,trap,wait,then,else,elif,test", buffer)) {
         is_keyword = 1;
       }
       
@@ -119,11 +119,11 @@ int st_sh_color(int prev_state, int *state, const char *text, int length) {
         is_keyword = 1;
       }
       
-      if (ident_length == 6 && strstr("export,return,ulimit,source,select,printf,enable,declare", buffer)) {
+      if (ident_length == 6 && strstr("export,return,ulimit,source,select,printf,enable", buffer)) {
         is_keyword = 1;
       }
       
-      if (ident_length == 7 && strstr("command,builtin", buffer)) {
+      if (ident_length == 7 && strstr("command,builtin,declare", buffer)) {
         is_keyword = 1;
       }
       
