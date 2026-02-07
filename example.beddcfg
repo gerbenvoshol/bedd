@@ -1,0 +1,46 @@
+# bedd configuration file
+# This file is in text format for easy editing
+# 
+# Comments start with #
+# Format: key=value
+
+# Indentation settings
+indent_width=2
+indent_spaces=1
+indent_guides=1
+
+# Scrolling behavior
+scroll_step=2
+scroll_image_step=4
+scroll_width_margin=0
+
+# Undo settings
+undo_edit_count=48
+undo_depth=64
+
+# Theme (0-17, see theme.c for options)
+theme=17
+
+# Terminal settings
+xterm_colors=1
+terminal_count=2048
+
+# Display settings
+column_guide=0
+column_tiny=0
+
+# Shell path for terminal
+shell_path=/usr/bin/sh
+
+# Syntax colors (hex-encoded for ANSI escape sequences)
+# These use hex encoding to preserve ANSI color codes
+# Leave empty or use hex values like: 1b5b316d (ESC[1m)
+syntax_color_0=
+syntax_color_1=1b5b32326d11
+syntax_color_2=1b5b316d17
+syntax_color_3=1b5b32326d15
+syntax_color_4=1b5b32326d16
+syntax_color_5=1b5b316d18
+syntax_color_6=1b5b32326d14
+syntax_color_7=1b5b32326d19
+syntax_color_8=1b5b316d13

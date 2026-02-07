@@ -18,6 +18,24 @@ $ sh build.sh # Building it
 $ ./bedd      # Running it afterwards
 ```
 
+## Configuration
+
+bedd stores its configuration in `~/.beddcfg` using a human-readable text format. The configuration file uses simple key=value pairs:
+
+```
+# bedd configuration file
+indent_width=2
+indent_spaces=1
+theme=17
+shell_path=/usr/bin/sh
+```
+
+See `example.beddcfg` for a complete configuration example with all available options.
+
+### Migration from Binary Format
+
+If you have an existing binary configuration file from an older version of bedd, it will be automatically converted to the text format on the first run.
+
 ## Licensing
 
 This project is licensed with the MIT license, check LICENSE for further details.
