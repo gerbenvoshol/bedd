@@ -60,6 +60,7 @@ static void  __bd_text_follow(bd_text_t *text);
 static char *__bd_text_output(bd_text_t *text, int to_file, io_file_t file, bd_cursor_t start, bd_cursor_t end);
 static void  __bd_text_syntax(bd_text_t *text, int start_line);
 static int   __bd_text_spaces(bd_text_t *text, int y);
+static void  __bd_text_indent(bd_text_t *text, int increase);
 
 static int __bd_text_utf_8_size(unsigned char value) {
   if (value >= 0xF0) {
@@ -897,6 +898,73 @@ void bd_text_draw(bd_view_t *view) {
   };
 }
 
+static void __bd_text_indent(bd_text_t *text, int increase) {
+  __bd_text_undo_save(text);
+  
+  bd_cursor_t min_cursor;
+  bd_cursor_t max_cursor;
+  
+  // If there's no selection, work on current line only
+  if (!memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
+    min_cursor = max_cursor = text->cursor;
+  } else {
+    min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
+    max_cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
+  }
+  
+  bd_cursor_t old_cursor = text->cursor;
+  bd_cursor_t old_hold_cursor = text->hold_cursor;
+  
+  for (int i = min_cursor.y; i <= max_cursor.y; i++) {
+    if (increase) {
+      // Increase indentation - add spaces/tab at beginning of line
+      text->cursor = text->hold_cursor = (bd_cursor_t) {
+        0, i
+      };
+      
+      __bd_text_write(text, '\t', 1);
+    } else {
+      // Decrease indentation - remove spaces from beginning of line
+      bd_line_t *line = text->lines + i;
+      int space_count = 0;
+      
+      while (space_count < line->size && line->data[space_count] == ' ' && space_count < bd_config.indent_width) {
+        space_count++;
+      }
+      
+      text->cursor = text->hold_cursor = (bd_cursor_t) {
+        space_count, i
+      };
+      
+      while (space_count--) {
+        __bd_text_backspace(text, 1);
+      }
+    }
+  }
+  
+  text->cursor = old_cursor;
+  text->hold_cursor = old_hold_cursor;
+  
+  if (increase) {
+    text->cursor.x += bd_config.indent_width;
+    text->hold_cursor.x += bd_config.indent_width;
+  } else {
+    text->cursor.x -= bd_config.indent_width;
+    
+    if (text->cursor.x < 0) {
+      text->cursor.x = 0;
+    }
+    
+    text->hold_cursor.x -= bd_config.indent_width;
+    
+    if (text->hold_cursor.x < 0) {
+      text->hold_cursor.x = 0;
+    }
+  }
+  
+  __bd_text_undo_save(text);
+}
+
 int bd_text_event(bd_view_t *view, io_event_t event) {
   bd_text_t *text = view->data;
   int lind_size = 1, lind_max = 10, lind_left = 2, lind_right = 2, lind_post = 1;
@@ -912,60 +980,16 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   
   if (event.type == IO_EVENT_KEY_PRESS) {
     if (IO_UNSHIFT(event.key) == '\t' && memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
-      __bd_text_undo_save(text);
-      
-      bd_cursor_t min_cursor = BD_CURSOR_MIN(text->cursor, text->hold_cursor);
-      bd_cursor_t max_cursor = BD_CURSOR_MAX(text->cursor, text->hold_cursor);
-      
-      bd_cursor_t old_cursor = text->cursor;
-      bd_cursor_t old_hold_cursor = text->hold_cursor;
-      
-      for (int i = min_cursor.y; i <= max_cursor.y; i++) {
-        if (event.key == IO_UNSHIFT(event.key)) {
-          text->cursor = text->hold_cursor = (bd_cursor_t) {
-            0, i
-          };
-          
-          __bd_text_write(text, '\t', 1);
-        } else {
-          bd_line_t *line = text->lines + i;
-          int space_count = 0;
-          
-          while (space_count < line->size && line->data[space_count] == ' ' && space_count < bd_config.indent_width) {
-            space_count++;
-          }
-          
-          text->cursor = text->hold_cursor = (bd_cursor_t) {
-            space_count, i
-          };
-          
-          while (space_count--) {
-            __bd_text_backspace(text, 1);
-          }
-        }
-      }
-      
-      text->cursor = old_cursor;
-      text->hold_cursor = old_hold_cursor;
-      
-      if (event.key == IO_UNSHIFT(event.key)) {
-        text->cursor.x += bd_config.indent_width;
-        text->hold_cursor.x += bd_config.indent_width;
-      } else {
-        text->cursor.x -= bd_config.indent_width;
-        
-        if (text->cursor.x < 0) {
-          text->cursor.x = 0;
-        }
-        
-        text->hold_cursor.x -= bd_config.indent_width;
-        
-        if (text->hold_cursor.x < 0) {
-          text->hold_cursor.x = 0;
-        }
-      }
-      
-      __bd_text_undo_save(text);
+      // Tab/Shift+Tab on selection - use new indent function
+      __bd_text_indent(text, event.key == IO_UNSHIFT(event.key));
+      return 1;
+    } else if (event.key == IO_CTRL(']')) {
+      // Ctrl+] - Increase indentation
+      __bd_text_indent(text, 1);
+      return 1;
+    } else if (event.key == IO_CTRL('[')) {
+      // Ctrl+[ - Decrease indentation
+      __bd_text_indent(text, 0);
       return 1;
     } else if ((event.key >= 32 && event.key < 127) || event.key == '\t' || event.key & 0x80000000) {
       __bd_text_write(text, event.key & 0x7FFFFFFF, 1);

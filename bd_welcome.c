@@ -42,6 +42,8 @@ void bd_welcome_draw(bd_view_t *view) {
                  IO_BOLD " Ctrl+Z " IO_NORMAL "Undo\n"
                  IO_BOLD " Ctrl+Y " IO_NORMAL "Redo\n"
                  IO_BOLD " Ctrl+K " IO_NORMAL "(Un)Comment\n"
+                 IO_BOLD " Ctrl+] " IO_NORMAL "Indent\n"
+                 IO_BOLD " Ctrl+[ " IO_NORMAL "Dedent\n"
                  IO_BOLD " (Shift+)Tab " IO_NORMAL "(Un)Indent\n"
                  IO_BOLD " Shift+[\u2190\u2191\u2192\u2193] " IO_NORMAL "Select\n\n"
                  IO_UNDERLINE "Terminal tab:" IO_NORMAL "\n"
