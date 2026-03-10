@@ -99,10 +99,9 @@ int bd_edit_event(bd_view_t *view, io_event_t event) {
       // Adjust value for integer options
       int direction = (event.key == IO_ARROW_RIGHT) ? 1 : -1;
       
-      bd_config.raw_data[index] -= __edit_limits[index * 2];
-      bd_config.raw_data[index] += direction + __edit_limits[index * 2 + 1] - __edit_limits[index * 2];
-      bd_config.raw_data[index] %= (__edit_limits[index * 2 + 1] - __edit_limits[index * 2]) + 1;
-      bd_config.raw_data[index] += __edit_limits[index * 2];
+      int min = __edit_limits[index * 2];
+      int range = __edit_limits[index * 2 + 1] - min + 1;
+      bd_config.raw_data[index] = (bd_config.raw_data[index] - min + direction + range) % range + min;
       
       strcpy(view->title, "Edit configuration*");
       return 1;
