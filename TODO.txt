@@ -2,4 +2,3 @@
 - Possibly work towards bare-metal 32-bit build (;
 - Preview bold, underline and links in markdown (and hide *, **, _, ~, etc. if not editing that specific line)
 - Binary hex-editor tab
-- Make terminal shell changeable in configuration

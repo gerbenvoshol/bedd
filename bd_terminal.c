@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include <bedd.h>
 
 typedef struct bd_char_t bd_char_t;
@@ -27,6 +28,7 @@ struct bd_line_t {
 
 struct bd_terminal_t {
   char title[240];
+  int has_osc_title;   // 1 if title was set via OSC escape sequence
   
   bd_line_t *lines;
   int count;
@@ -38,6 +40,13 @@ struct bd_terminal_t {
   io_file_t file;
   
   int dirty;
+  
+  // Alternate screen buffer (for programs like less/vim that use ?1049h/l)
+  bd_line_t *alt_lines;
+  int alt_count;
+  bd_cursor_t alt_cursor;
+  int alt_scroll_y;
+  int in_alt_screen;
 };
 
 static const bd_char_t __bd_empty = (bd_char_t) {
@@ -202,7 +211,35 @@ void bd_terminal_draw(bd_view_t *view) {
     cursor_y = -1;
   }
   
-  sprintf(view->title, "%s (Terminal)", terminal->title);
+  if (terminal->has_osc_title) {
+    snprintf(view->title, sizeof(view->title), "%s (Terminal)", terminal->title);
+  } else {
+    // Try to get the current working directory from /proc/<pid>/cwd.
+    // The PID is encoded in file.data as (fd * 1048576 + pid), same convention
+    // used throughout io_linux.c (io_tclose, io_tresize, io_techo).
+    pid_t pid = (pid_t)((size_t)(terminal->file.data) % 1048576);
+    char proc_path[32];
+    snprintf(proc_path, sizeof(proc_path), "/proc/%d/cwd", (int)pid);
+    // Reserve space for " (Terminal)" suffix (11 chars + null) in view->title
+    char cwd[sizeof(view->title) - sizeof(" (Terminal)")];
+    ssize_t cwd_len = readlink(proc_path, cwd, sizeof(cwd) - 1);
+    if (cwd_len > 0) {
+      cwd[cwd_len] = '\0';
+      // Shorten home directory to ~
+      const char *home = getenv("HOME");
+      size_t home_len = home ? strlen(home) : 0;
+      if (home && home_len > 0 && strncmp(cwd, home, home_len) == 0 &&
+          (cwd[home_len] == '/' || cwd[home_len] == '\0')) {
+        char short_cwd[sizeof(view->title) - sizeof(" (Terminal)")];
+        snprintf(short_cwd, sizeof(short_cwd), "~%s", cwd + home_len);
+        snprintf(view->title, sizeof(view->title), "%s (Terminal)", short_cwd);
+      } else {
+        snprintf(view->title, sizeof(view->title), "%s (Terminal)", cwd);
+      }
+    } else {
+      snprintf(view->title, sizeof(view->title), "%s (Terminal)", terminal->title);
+    }
+  }
   
   view->cursor = (bd_cursor_t) {
     terminal->cursor.x, cursor_y,
@@ -248,6 +285,7 @@ int bd_terminal_tick(bd_view_t *view) {
       if (buffer[1] == ']' && buffer[2] == '0' && buffer[3] == ';') {
         buffer[length - 1] = '\0';
         strcpy(terminal->title, (char *)(buffer) + 4);
+        terminal->has_osc_title = 1;
       }
       
       if (buffer[1] != '[') {
@@ -495,6 +533,44 @@ int bd_terminal_tick(bd_view_t *view) {
           }
         }
       }
+      
+      // Handle DEC private mode sequences (?<mode>h / ?<mode>l)
+      if (buffer[2] == '?') {
+        int mode = 0;
+        sscanf((char *)(buffer + 3), "%d", &mode);
+        
+        if (buffer[length - 1] == 'h' && mode == 1049) {
+          // Enter alternate screen buffer: save state and start fresh
+          terminal->alt_lines    = terminal->lines;
+          terminal->alt_count    = terminal->count;
+          terminal->alt_cursor   = terminal->cursor;
+          terminal->alt_scroll_y = terminal->scroll_y;
+          terminal->in_alt_screen = 1;
+          
+          terminal->lines = calloc(sizeof(bd_line_t), 1);
+          terminal->lines[0].dirty = 1;
+          terminal->count    = 1;
+          terminal->cursor   = (bd_cursor_t) { 0, 0 };
+          terminal->scroll_y = 0;
+          terminal->dirty    = 1;
+        } else if (buffer[length - 1] == 'l' && mode == 1049 && terminal->in_alt_screen) {
+          // Exit alternate screen buffer: free alt content and restore saved state
+          for (int i = 0; i < terminal->count; i++) {
+            free(terminal->lines[i].data);
+          }
+          free(terminal->lines);
+          
+          terminal->lines        = terminal->alt_lines;
+          terminal->count        = terminal->alt_count;
+          terminal->cursor       = terminal->alt_cursor;
+          terminal->scroll_y     = terminal->alt_scroll_y;
+          terminal->in_alt_screen = 0;
+          terminal->dirty        = 1;
+          
+          terminal->alt_lines = NULL;
+          terminal->alt_count = 0;
+        }
+      }
     } else {
       __bd_terminal_write(terminal, length, buffer);
     }
@@ -573,6 +649,7 @@ int bd_terminal_event(bd_view_t *view, io_event_t event) {
 void bd_terminal_load(bd_view_t *view) {
   bd_terminal_t *terminal = (view->data = malloc(sizeof(bd_terminal_t)));
   strcpy(terminal->title, bd_config.shell_path);
+  terminal->has_osc_title = 0;
   
   terminal->lines = calloc(sizeof(bd_line_t), 1);
   terminal->count = 1;
@@ -589,10 +666,28 @@ void bd_terminal_load(bd_view_t *view) {
   
   terminal->dirty = 0;
   
+  terminal->alt_lines    = NULL;
+  terminal->alt_count    = 0;
+  terminal->in_alt_screen = 0;
+  
   io_tresize(terminal->file, bd_width - 2, bd_height - 2);
 }
 
 void bd_terminal_kill(bd_view_t *view) {
   bd_terminal_t *terminal = view->data;
   io_tclose(terminal->file);
+  
+  // Free current screen lines
+  for (int i = 0; i < terminal->count; i++) {
+    free(terminal->lines[i].data);
+  }
+  free(terminal->lines);
+  
+  // Free alternate screen lines if present
+  if (terminal->in_alt_screen && terminal->alt_lines) {
+    for (int i = 0; i < terminal->alt_count; i++) {
+      free(terminal->alt_lines[i].data);
+    }
+    free(terminal->alt_lines);
+  }
 }

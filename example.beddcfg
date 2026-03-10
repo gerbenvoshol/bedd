@@ -32,6 +32,8 @@ column_tiny=0
 # Shell path for terminal
 # This determines which shell is launched when you open a terminal
 # Common values: /bin/bash, /bin/zsh, /usr/bin/fish, /bin/sh
+# By default, bedd uses the $SHELL environment variable (your login shell)
+# Set this to override and use a specific shell regardless of $SHELL
 # You can also change this in the configuration editor (Ctrl+E)
 shell_path=/usr/bin/sh
 
