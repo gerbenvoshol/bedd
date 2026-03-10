@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include <bedd.h>
 #include <io.h>
 
@@ -52,6 +53,13 @@ int bd_open(const char *path) {
 
 int main(int argc, const char **argv) {
   io_init();
+  
+  // Use the user's configured shell ($SHELL) as the default if available.
+  // This enables features like tab completion that /usr/bin/sh (dash) may lack.
+  const char *shell_env = getenv("SHELL");
+  if (shell_env && *shell_env) {
+    snprintf(bd_config.shell_path, sizeof(bd_config.shell_path), "%s", shell_env);
+  }
   
   // Try to load text-based config first
   if (!bd_config_load(io_config)) {

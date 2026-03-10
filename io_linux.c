@@ -286,6 +286,13 @@ io_file_t io_topen(const char *path) {
   }
   
   if (!pid) {
+    // Set TERM so the shell and programs know what terminal they're talking to
+    setenv("TERM", "xterm-256color", 1);
+    
+    // Set PROMPT_COMMAND for bash (only if not already set) so the terminal title
+    // shows the current working directory even without .bashrc configuration
+    setenv("PROMPT_COMMAND", "printf '\\033]0;%s\\007' \"$PWD\"", 0);
+    
     execl(path, path, NULL);
     exit(0);
   }
