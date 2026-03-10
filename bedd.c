@@ -46,7 +46,8 @@ int bd_open(const char *path) {
     return 1;
   }
   
-  return 0;
+  bd_view_add(buffer, bd_view_text, buffer);
+  return 1;
 }
 
 int main(int argc, const char **argv) {
