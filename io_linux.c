@@ -470,7 +470,7 @@ io_event_t io_get_event(void) {
     unsigned int key = chr;
     
     if (chr == '\x1B') {
-      indirect_read(ansi_buffer, 1);
+      if (indirect_read(ansi_buffer, 1) > 0) {
       
       if (ansi_buffer[0] == '[') {
         indirect_read(ansi_buffer + 1, 1);
@@ -618,6 +618,7 @@ mouse_parse_end:
             .scroll = (is_down ? -1 : 1),
           };
         }
+      }
       }
     } else if (chr == '\x7F') {
       key = IO_CTRL('H');

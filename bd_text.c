@@ -991,8 +991,8 @@ int bd_text_event(bd_view_t *view, io_event_t event) {
   }
   
   if (event.type == IO_EVENT_KEY_PRESS) {
-    if (IO_UNSHIFT(event.key) == '\t' && memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t))) {
-      // Tab/Shift+Tab on selection - use new indent function
+    if (IO_UNSHIFT(event.key) == '\t' && (event.key == IO_SHIFT('\t') || memcmp(&(text->cursor), &(text->hold_cursor), sizeof(bd_cursor_t)))) {
+      // Tab/Shift+Tab on selection, or Shift+Tab without selection - use new indent function
       __bd_text_indent(text, event.key == IO_UNSHIFT(event.key));
       return 1;
     } else if (event.key == IO_CTRL(']')) {
