@@ -914,6 +914,8 @@ static void __bd_text_indent(bd_text_t *text, int increase) {
   
   bd_cursor_t old_cursor = text->cursor;
   bd_cursor_t old_hold_cursor = text->hold_cursor;
+  int cursor_adj = 0;
+  int hold_adj = 0;
   
   for (int i = min_cursor.y; i <= max_cursor.y; i++) {
     if (increase) {
@@ -924,20 +926,29 @@ static void __bd_text_indent(bd_text_t *text, int increase) {
       
       __bd_text_write(text, '\t', 1);
     } else {
-      // Decrease indentation - remove spaces from beginning of line
+      // Decrease indentation - remove leading spaces from beginning of line
       bd_line_t *line = text->lines + i;
-      int space_count = 0;
+      int remove_count = 0;
       
-      while (space_count < line->size && line->data[space_count] == ' ' && space_count < bd_config.indent_width) {
-        space_count++;
+      while (remove_count < line->size && line->data[remove_count] == ' ' && remove_count < bd_config.indent_width) {
+        remove_count++;
       }
       
-      text->cursor = text->hold_cursor = (bd_cursor_t) {
-        space_count, i
-      };
+      if (remove_count > 0) {
+        memmove(line->data, line->data + remove_count, line->size - remove_count);
+        line->size -= remove_count;
+        line->length -= remove_count;
+        text->edit_count++;
+        text->dirty = 1;
+        __bd_text_syntax(text, i);
+      }
       
-      while (space_count--) {
-        __bd_text_backspace(text, 1);
+      if (i == old_cursor.y) {
+        cursor_adj = remove_count;
+      }
+      
+      if (i == old_hold_cursor.y) {
+        hold_adj = remove_count;
       }
     }
   }
@@ -949,19 +960,20 @@ static void __bd_text_indent(bd_text_t *text, int increase) {
     text->cursor.x += bd_config.indent_width;
     text->hold_cursor.x += bd_config.indent_width;
   } else {
-    text->cursor.x -= bd_config.indent_width;
+    text->cursor.x -= cursor_adj;
     
     if (text->cursor.x < 0) {
       text->cursor.x = 0;
     }
     
-    text->hold_cursor.x -= bd_config.indent_width;
+    text->hold_cursor.x -= hold_adj;
     
     if (text->hold_cursor.x < 0) {
       text->hold_cursor.x = 0;
     }
   }
   
+  __bd_text_follow(text);
   __bd_text_undo_save(text);
 }
 
