@@ -1384,6 +1384,8 @@ void bd_text_load(bd_view_t *view, const char *path) {
   io_file_t file = io_fopen(path, 0);
   
   if (!io_fvalid(file)) {
+    text->syntax = st_init(path);
+    strcpy(text->path, path);
     __bd_text_undo_save(text);
     return;
   }

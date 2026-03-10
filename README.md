@@ -52,6 +52,17 @@ $ sh build.sh # Building it
 $ ./bedd      # Running it afterwards
 ```
 
+## Usage
+
+```sh
+bedd [files...]
+```
+
+- `bedd` — Opens the welcome screen
+- `bedd file.c` — Opens an existing file for editing, or creates a new empty file with that name if it doesn't exist
+- `bedd file1.c file2.py` — Opens multiple files in separate tabs
+- `bedd path/to/dir/` — Opens a directory in the file explorer
+
 ## Key Features
 
 ### Text Editing
