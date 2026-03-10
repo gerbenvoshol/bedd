@@ -535,7 +535,7 @@ int bd_terminal_event(bd_view_t *view, io_event_t event) {
   
   if (event.type == IO_EVENT_KEY_PRESS) {
     unsigned char buffer[4];
-    int length = 1, echo = 0;
+    int length = 1;
     
     buffer[0] = event.key & 0xFF;
     buffer[1] = (event.key >> 8) & 0xFF;
@@ -550,21 +550,18 @@ int bd_terminal_event(bd_view_t *view, io_event_t event) {
       length = 2;
     }
     
-    if ((event.key >= 32 && event.key < 128) || strchr("\b\n\t", event.key)) {
+    if (event.key == '\b') {
+      unsigned char del = '\x7F';
+      io_fwrite(terminal->file, &del, 1);
+    } else if ((event.key >= 32 && event.key < 128) || strchr("\n\t", event.key)) {
       io_fwrite(terminal->file, &event.key, 1);
-      echo = 1;
     } else if (event.key & 0x80000000) {
       io_fwrite(terminal->file, buffer, length);
-      echo = 1;
     } else if (IO_UNALT(event.key) < 32) {
       unsigned char key = IO_UNALT(event.key);
       io_fwrite(terminal->file, &key, 1);
     } else if (IO_EXTRA(event.key) == event.key) {
       io_tsend(terminal->file, event.key);
-    }
-    
-    if (echo && io_techo(terminal->file)) {
-      __bd_terminal_write(terminal, length, buffer);
     }
   } else if (event.type == IO_EVENT_RESIZE) {
     io_tresize(terminal->file, bd_width - 2, bd_height - 2);
