@@ -63,7 +63,7 @@ static const bd_char_t __bd_empty = (bd_char_t) {
 static void __bd_terminal_write(bd_terminal_t *terminal, int length, unsigned char buffer[length]);
 
 static void __bd_terminal_write(bd_terminal_t *terminal, int length, unsigned char buffer[length]) {
-  if (buffer[0] == '\b') {
+  if (buffer[0] == '\b' || buffer[0] == '\x7F') {
     if (terminal->cursor.x) {
       terminal->cursor.x--;
     } else if (terminal->cursor.y) {
@@ -272,8 +272,18 @@ int bd_terminal_tick(bd_view_t *view) {
       while (io_fread(terminal->file, buffer + length, 1) > 0) {
         length++;
         
-        if (isalpha(buffer[length - 1]) || buffer[length - 1] == '\x07') {
-          break;
+        // OSC sequences (ESC ]) terminate at BEL (0x07) or ESC (leading to ST = ESC \).
+        // Their content (title text) may contain letters, so don't break on alpha.
+        // CSI and other sequences (ESC [) terminate at the final alpha character.
+        // ST (ESC \) is handled below for all sequence types.
+        if (buffer[1] == ']') {
+          if (buffer[length - 1] == '\x07') {
+            break;
+          }
+        } else {
+          if (isalpha(buffer[length - 1]) || buffer[length - 1] == '\x07') {
+            break;
+          }
         }
         
         if (buffer[length - 1] == '\x1B') {
